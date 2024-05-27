@@ -1,6 +1,7 @@
 package com.govind.service;
 
 import java.time.LocalDate;
+import java.time.YearMonth;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 
@@ -29,13 +30,17 @@ public class EmployeeService {
     }
 
     public double calculateTax(Employee employee) {
+
         LocalDate now = LocalDate.now();
         LocalDate financialYearStart = now.getMonthValue() >= 4 ? LocalDate.of(now.getYear(), 4, 1) : LocalDate.of(now.getYear() - 1, 4, 1);
         LocalDate doj = employee.getDoj();
-
-        int monthsWorked = (int) ChronoUnit.MONTHS.between(doj.isBefore(financialYearStart) ? financialYearStart : doj, now) + 1;
-
-        double yearlySalary = employee.getSalary() * monthsWorked;
+        LocalDate finalDate =  doj.isBefore(financialYearStart) ? financialYearStart : doj;
+        int monthsWorked =(int) ChronoUnit.MONTHS.between(finalDate,now) + 1;
+   	 double yearlySalary =0;
+	 yearlySalary =calculateLopAndTotalSalary(finalDate, employee.getSalary())+ (employee.getSalary() * (monthsWorked-1));
+	
+        
+       //  yearlySalary = employee.getSalary() * monthsWorked;
         double tax = 0.0;
 
         if (yearlySalary <= 250000) {
@@ -53,5 +58,26 @@ public class EmployeeService {
         }
 
         return tax;
+    }
+    public static double calculateLopAndTotalSalary(LocalDate dateOfJoining, double salary) {
+     
+        // Get the total number of days in the joining month
+        YearMonth yearMonth = YearMonth.from(dateOfJoining);
+        int totalDaysInMonth = yearMonth.lengthOfMonth();
+        
+        // Calculate the number of days worked
+        int workedDays = totalDaysInMonth - dateOfJoining.getDayOfMonth() + 1;
+       
+        // Calculate daily salary
+        double dailySalary = salary / 30; // As per requirement, considering 30 days for LOP calculation
+        
+        // Calculate LOP amount
+        int lopDays = totalDaysInMonth - workedDays;
+        double lopAmount = lopDays * dailySalary;
+        
+        // Calculate the total salary for the month
+        double totalSalary = workedDays * dailySalary;
+
+        return totalSalary;
     }
 }
